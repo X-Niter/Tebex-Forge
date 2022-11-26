@@ -1,7 +1,8 @@
 {
     "pack": {
         "description": "buycraft resources (empty)",
-        "pack_format": 9,
-        "_comment": "A pack_format of 9 is 1.18.2."
+        "pack_format": 8,
+        "forge:resource_pack_format": 8,
+        "forge:data_pack_format": 9
     }
 }
