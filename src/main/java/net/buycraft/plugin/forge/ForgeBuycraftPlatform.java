@@ -1,15 +1,15 @@
 package net.buycraft.plugin.forge;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.buycraft.plugin.BuyCraftAPI;
-import net.buycraft.plugin.IBuycraftPlatform;
-import net.buycraft.plugin.UuidUtil;
-import net.buycraft.plugin.data.QueuedPlayer;
-import net.buycraft.plugin.data.responses.ServerInformation;
-import net.buycraft.plugin.execution.placeholder.PlaceholderManager;
-import net.buycraft.plugin.execution.strategy.CommandExecutor;
-import net.buycraft.plugin.platform.PlatformInformation;
-import net.buycraft.plugin.platform.PlatformType;
+import net.buycraft.plugin.forge.common.BuyCraftAPI;
+import net.buycraft.plugin.forge.common.IBuycraftPlatform;
+import net.buycraft.plugin.forge.common.UuidUtil;
+import net.buycraft.plugin.forge.common.data.QueuedPlayer;
+import net.buycraft.plugin.forge.common.data.responses.ServerInformation;
+import net.buycraft.plugin.forge.common.execution.placeholder.PlaceholderManager;
+import net.buycraft.plugin.forge.common.execution.strategy.CommandExecutor;
+import net.buycraft.plugin.forge.common.platform.PlatformInformation;
+import net.buycraft.plugin.forge.common.platform.PlatformType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;

@@ -2,9 +2,9 @@ package net.buycraft.plugin.forge.command;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import net.buycraft.plugin.data.Coupon;
 import net.buycraft.plugin.forge.BuycraftPlugin;
-import net.buycraft.plugin.shared.util.CouponUtil;
+import net.buycraft.plugin.forge.common.data.Coupon;
+import net.buycraft.plugin.forge.shared.util.CouponUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.TextComponent;
 

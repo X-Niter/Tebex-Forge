@@ -12,8 +12,9 @@ buildscript {
 
 
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'java'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
-//apply plugin: 'eclipse'
+apply plugin: 'eclipse'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 
@@ -63,25 +64,54 @@ minecraft {
 
 repositories {
     mavenLocal()
+    mavenCentral()
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.18.2-40.1.80'
-    shadow('net.buycraft:buycraftx-plugin-shared:12.0.8')
-    minecraftLibrary 'net.buycraft:buycraftx-plugin-shared:12.0.8'
-    minecraftLibrary 'net.buycraft:buycraftx-common:12.0.8'
+
+    minecraftLibrary('com.squareup.okhttp3:okhttp:3.14.9') {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.code.findbugs'
+    }
+    shadow 'com.squareup.okhttp3:okhttp:3.14.9'
+
+    minecraftLibrary('com.squareup.retrofit2:retrofit:2.9.0') {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.code.findbugs'
+    }
+    shadow 'com.squareup.retrofit2:retrofit:2.9.0'
+
+    minecraftLibrary('com.squareup.retrofit2:converter-gson:2.9.0') {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.code.findbugs'
+    }
+    shadow 'com.squareup.retrofit2:converter-gson:2.9.0'
+
+    minecraftLibrary('junit:junit:4.13.2') {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.code.findbugs'
+    }
+    shadow 'junit:junit:4.13.2'
+    //shadow('net.buycraft:buycraftx-plugin-shared:12.0.8')
+    //minecraftLibrary('net.buycraft:buycraftx-plugin-shared:12.0.8')
+    //minecraftLibrary('net.buycraft:buycraftx-common:12.0.8')
 
 }
 
-version = configurations.getByName("shadow").dependencies.find().version // copy common version
+//version = configurations.getByName("shadow").dependencies.find().version // copy common version
+version = '12.0.8'
 
 shadowJar {
     configurations = [project.configurations.shadow]
 
-    relocate 'okhttp3', 'net.buycraft.plugin.internal.okhttp3'
-    relocate 'okio', 'net.buycraft.plugin.internal.okio'
-    relocate 'retrofit2', 'net.buycraft.plugin.internal.retrofit2'
-    relocate 'com.fasterxml.jackson', 'net.buycraft.plugin.internal.jackson'
+    relocate('okhttp3', 'net.buycraft.plugin.internal.okhttp3')
+    relocate('okio', 'net.buycraft.plugin.internal.okio')
+    relocate('retrofit2', 'net.buycraft.plugin.internal.retrofit2')
+    relocate('com.fasterxml.jackson', 'net.buycraft.plugin.internal.jackson')
+
+    relocate('org.jetbrains', 'net.buycraft.plugin.internal.org.jetbrains')
+    relocate('com.google.code.gson', 'net.buycraft.plugin.internal.google')
 
     minimize {
         exclude("com/google/**")

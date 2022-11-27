@@ -2,25 +2,24 @@ package net.buycraft.plugin.forge;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.buycraft.plugin.BuyCraftAPI;
-import net.buycraft.plugin.IBuycraftPlatform;
-import net.buycraft.plugin.data.QueuedPlayer;
-import net.buycraft.plugin.data.responses.ServerInformation;
-import net.buycraft.plugin.execution.DuePlayerFetcher;
-import net.buycraft.plugin.execution.placeholder.NamePlaceholder;
-import net.buycraft.plugin.execution.placeholder.PlaceholderManager;
-import net.buycraft.plugin.execution.placeholder.UuidPlaceholder;
-import net.buycraft.plugin.execution.strategy.CommandExecutor;
-import net.buycraft.plugin.execution.strategy.PostCompletedCommandsTask;
-import net.buycraft.plugin.execution.strategy.QueuedCommandExecutor;
 import net.buycraft.plugin.forge.command.*;
+import net.buycraft.plugin.forge.common.BuyCraftAPI;
+import net.buycraft.plugin.forge.common.IBuycraftPlatform;
+import net.buycraft.plugin.forge.common.data.QueuedPlayer;
+import net.buycraft.plugin.forge.common.data.responses.ServerInformation;
+import net.buycraft.plugin.forge.common.execution.DuePlayerFetcher;
+import net.buycraft.plugin.forge.common.execution.placeholder.NamePlaceholder;
+import net.buycraft.plugin.forge.common.execution.placeholder.PlaceholderManager;
+import net.buycraft.plugin.forge.common.execution.placeholder.UuidPlaceholder;
+import net.buycraft.plugin.forge.common.execution.strategy.CommandExecutor;
+import net.buycraft.plugin.forge.common.execution.strategy.PostCompletedCommandsTask;
+import net.buycraft.plugin.forge.common.execution.strategy.QueuedCommandExecutor;
+import net.buycraft.plugin.forge.shared.Setup;
+import net.buycraft.plugin.forge.shared.config.BuycraftConfiguration;
+import net.buycraft.plugin.forge.shared.config.BuycraftI18n;
+import net.buycraft.plugin.forge.shared.tasks.PlayerJoinCheckTask;
+import net.buycraft.plugin.forge.shared.util.AnalyticsSend;
 import net.buycraft.plugin.forge.util.VersionCheck;
-import net.buycraft.plugin.shared.Setup;
-import net.buycraft.plugin.shared.config.BuycraftConfiguration;
-import net.buycraft.plugin.shared.config.BuycraftI18n;
-import net.buycraft.plugin.shared.tasks.PlayerJoinCheckTask;
-import net.buycraft.plugin.shared.util.AnalyticsSend;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -31,6 +30,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -75,9 +75,13 @@ public class BuycraftPlugin {
     private OkHttpClient httpClient;
     private IBuycraftPlatform platform;
     private CommandExecutor commandExecutor;
-    private BuycraftI18n i18n;
+    //private BuycraftI18n i18n;
     private PostCompletedCommandsTask completedCommandsTask;
     private PlayerJoinCheckTask playerJoinCheckTask;
+
+    private BuycraftPlugin plugin;
+
+    private boolean stopped = false;
 
     public BuycraftPlugin() {
         pluginVersion = ModLoadingContext.get().getActiveContainer().getModInfo().getVersion().toString();
@@ -132,7 +136,7 @@ public class BuycraftPlugin {
                 return;
             }
 
-            i18n = configuration.createI18n();
+            //i18n = configuration.createI18n();
             getLogger().warn("Forcing english translations while we wait on a forge bugfix!");
             httpClient = Setup.okhttp(baseDirectory.resolve("cache").toFile());
 
@@ -189,13 +193,13 @@ public class BuycraftPlugin {
     private LiteralArgumentBuilder<CommandSourceStack> configureCommand(LiteralArgumentBuilder<CommandSourceStack> command) {
         CouponCmd couponCmd = new CouponCmd(this);
         return command
-                .requires(player -> {
+                /*.requires(player -> {
                     try {
                         return player.getPlayerOrException().hasPermissions(2);
                     } catch (CommandSyntaxException e) {
                         return false;
                     }
-                })
+                })*/
                 .then(Commands.literal("coupon")
                         .then(Commands.literal("create")
                                 .then(Commands.argument("data", StringArgumentType.greedyString()).executes(couponCmd::create)))
@@ -226,7 +230,7 @@ public class BuycraftPlugin {
     // DIYing one similar to how bukkits one works, with a nice builder thrown on top.
     @SubscribeEvent
     public void onTick(TickEvent.ServerTickEvent event) {
-        if (server != null && server.isDedicatedServer() && event.phase == TickEvent.Phase.END) {
+        if (!stopped && server != null && server.isDedicatedServer() && event.phase == TickEvent.Phase.END) {
             scheduledTasks.forEach(task -> {
                 if (task.getCurrentDelay() > 0) {
                     task.setCurrentDelay(task.getCurrentDelay() - 1);
@@ -254,6 +258,29 @@ public class BuycraftPlugin {
             });
             scheduledTasks.removeIf(task -> task.getCurrentDelay() <= 0 && task.getInterval() <= -1);
         }
+    }
+
+    @SubscribeEvent
+    public void serverStopping(ServerStoppedEvent event) {
+
+        event.getServer().executeBlocking(() -> {
+            scheduledTasks.clear();
+            if (!executor.isTerminated() || !executor.isShutdown()) {
+                executor.shutdownNow();
+            }
+            httpClient.dispatcher().cancelAll();
+        });
+
+        apiClient = null;
+        completedCommandsTask = null;
+        commandExecutor = null;
+        playerJoinCheckTask = null;
+        this.stopped = true;
+        plugin = null;
+        platform = null;
+        LOGGER.info("Unloaded Tebex successfully");
+
+
     }
 
     public Logger getLogger() {
@@ -321,9 +348,11 @@ public class BuycraftPlugin {
         return commandExecutor;
     }
 
+    /*
     public BuycraftI18n getI18n() {
         return i18n;
     }
+     */
 
     public PostCompletedCommandsTask getCompletedCommandsTask() {
         return completedCommandsTask;
