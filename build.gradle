@@ -9,9 +9,11 @@ buildscript {
         classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
     }
 }
+
+
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
-apply plugin: 'eclipse'
+//apply plugin: 'eclipse'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 
@@ -20,10 +22,6 @@ archivesBaseName = 'buycraftx-forge-1.18.2'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-repositories {
-    mavenLocal()
-}
-
 minecraft {
     mappings channel: 'official', version: '1.18.2'
 
@@ -31,11 +29,12 @@ minecraft {
         client {
             workingDirectory project.file('run')
 
-            // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
-            // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            property 'forge.enabledGameTestNamespaces', 'Tebex-Forge'
 
             mods {
                 buycraft {
@@ -47,11 +46,11 @@ minecraft {
         server {
             workingDirectory project.file('run')
 
-            // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
-            // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
+
+            property 'forge.enabledGameTestNamespaces', 'Tebex-Forge'
 
             mods {
                 buycraft {
@@ -62,22 +61,38 @@ minecraft {
     }
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     minecraft 'net.minecraftforge:forge:1.18.2-40.1.80'
-    shadow 'net.buycraft:buycraftx-plugin-shared:12.0.8'
+    shadow('net.buycraft:buycraftx-plugin-shared:12.0.8')
+    minecraftLibrary 'net.buycraft:buycraftx-plugin-shared:12.0.8'
+    minecraftLibrary 'net.buycraft:buycraftx-common:12.0.8'
+
 }
 
 version = configurations.getByName("shadow").dependencies.find().version // copy common version
 
 shadowJar {
     configurations = [project.configurations.shadow]
+
     relocate 'okhttp3', 'net.buycraft.plugin.internal.okhttp3'
     relocate 'okio', 'net.buycraft.plugin.internal.okio'
     relocate 'retrofit2', 'net.buycraft.plugin.internal.retrofit2'
     relocate 'com.fasterxml.jackson', 'net.buycraft.plugin.internal.jackson'
-    relocate 'com.google', 'net.buycraft.plugin.internal.google'
 
-    classifier '' // Replace the default JAR
+    minimize {
+        exclude("com/google/**")
+        exclude("javax/annotation/**")
+        exclude("org/**")
+
+        exclude("META-INF/proguard/*")
+        exclude("META-INF/retrofit.*")
+    }
+
+    classifier ''
 }
 
 afterEvaluate {
@@ -100,4 +115,10 @@ jar {
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
+}
+
+assemble.dependsOn shadowJar
+
+reobf {
+    shadowJar {}
 }
