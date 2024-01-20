@@ -4,9 +4,10 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.buycraft.plugin.BuyCraftAPI;
+import net.buycraft.plugin.data.responses.ServerInformation;
 import net.buycraft.plugin.forge.BuycraftPlugin;
-import net.buycraft.plugin.forge.common.BuyCraftAPI;
-import net.buycraft.plugin.forge.common.data.responses.ServerInformation;
+import net.buycraft.plugin.forge.util.CmdUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.TextComponent;
 
@@ -23,7 +24,7 @@ public class SecretCmd implements Command<CommandSourceStack> {
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         if (context.getSource().getEntity() != null) {
             ForgeMessageUtil.sendMessage(context.getSource(), new TextComponent(ForgeMessageUtil.format("secret_console_only"))
-                    .setStyle(BuycraftPlugin.ERROR_STYLE));
+                    .setStyle(CmdUtil.ERROR_STYLE));
             return 0;
         }
 
@@ -37,7 +38,7 @@ public class SecretCmd implements Command<CommandSourceStack> {
             } catch (IOException e) {
                 plugin.getLogger().error("Unable to verify secret", e);
                 ForgeMessageUtil.sendMessage(context.getSource(), new TextComponent(ForgeMessageUtil.format("secret_does_not_work"))
-                        .setStyle(BuycraftPlugin.ERROR_STYLE));
+                        .setStyle(CmdUtil.ERROR_STYLE));
                 return;
             }
 
@@ -49,11 +50,11 @@ public class SecretCmd implements Command<CommandSourceStack> {
                 plugin.saveConfiguration();
             } catch (IOException e) {
                 ForgeMessageUtil.sendMessage(context.getSource(), new TextComponent(ForgeMessageUtil.format("secret_cant_be_saved"))
-                        .setStyle(BuycraftPlugin.ERROR_STYLE));
+                        .setStyle(CmdUtil.ERROR_STYLE));
             }
 
             ForgeMessageUtil.sendMessage(context.getSource(), new TextComponent(ForgeMessageUtil.format("secret_success",
-                    information.getServer().getName(), information.getAccount().getName())).setStyle(BuycraftPlugin.SUCCESS_STYLE));
+                    information.getServer().getName(), information.getAccount().getName())).setStyle(CmdUtil.SUCCESS_STYLE));
 
             boolean repeatChecks = currentKey.equals("INVALID");
 

@@ -1,154 +1,146 @@
 buildscript {
     repositories {
-        maven { url = 'https://maven.minecraftforge.net' }
+        gradlePluginPortal()
         mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = "https://plugins.gradle.org/m2/" }
+        maven { url = 'https://maven.parchmentmc.org' }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.+', changing: true
+        classpath "com.github.johnrengelman:shadow:8.1.1"
+        classpath 'org.parchmentmc:librarian:1.+'
     }
 }
 
-
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'java'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
 apply plugin: 'com.github.johnrengelman.shadow'
 
+group = mod_group_id // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+version = mod_version
 
-group = 'net.buycraft' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'buycraftx-forge-1.18.2'
+base {
+    archivesName = mod_id
+}
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
+
 minecraft {
-    mappings channel: 'official', version: '1.18.2'
+    mappings channel: mapping_channel, version: mapping_version
+
+    copyIdeResources = true
 
     runs {
-        client {
+        configureEach {
             workingDirectory project.file('run')
 
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.markers', 'REGISTRIES'
 
             property 'forge.logging.console.level', 'debug'
 
-            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            property 'forge.enabledGameTestNamespaces', 'Tebex-Forge'
-
             mods {
-                buycraft {
+                "${mod_id}" {
                     source sourceSets.main
                 }
             }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
         }
 
         server {
-            workingDirectory project.file('run')
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
 
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
 
-            property 'forge.logging.console.level', 'debug'
+        data {
+            workingDirectory project.file('run-data')
 
-            property 'forge.enabledGameTestNamespaces', 'Tebex-Forge'
-
-            mods {
-                buycraft {
-                    source sourceSets.main
-                }
-            }
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
 }
 
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
 repositories {
     mavenLocal()
-    mavenCentral()
+    flatDir {
+         dir 'common/target'
+         dir 'plugin-shared/target'
+     }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.80'
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    minecraftLibrary('com.squareup.okhttp3:okhttp:3.14.9') {
-        exclude group: 'com.google.code.gson', module: 'gson'
-        exclude group: 'com.google.code.findbugs'
-    }
-    shadow 'com.squareup.okhttp3:okhttp:3.14.9'
-
-    minecraftLibrary('com.squareup.retrofit2:retrofit:2.9.0') {
-        exclude group: 'com.google.code.gson', module: 'gson'
-        exclude group: 'com.google.code.findbugs'
-    }
-    shadow 'com.squareup.retrofit2:retrofit:2.9.0'
-
-    minecraftLibrary('com.squareup.retrofit2:converter-gson:2.9.0') {
-        exclude group: 'com.google.code.gson', module: 'gson'
-        exclude group: 'com.google.code.findbugs'
-    }
-    shadow 'com.squareup.retrofit2:converter-gson:2.9.0'
-
-    minecraftLibrary('junit:junit:4.13.2') {
-        exclude group: 'com.google.code.gson', module: 'gson'
-        exclude group: 'com.google.code.findbugs'
-    }
-    shadow 'junit:junit:4.13.2'
-    //shadow('net.buycraft:buycraftx-plugin-shared:12.0.8')
-    //minecraftLibrary('net.buycraft:buycraftx-plugin-shared:12.0.8')
-    //minecraftLibrary('net.buycraft:buycraftx-common:12.0.8')
-
-}
-
-//version = configurations.getByName("shadow").dependencies.find().version // copy common version
-version = '12.0.8'
-
-shadowJar {
-    configurations = [project.configurations.shadow]
-
-    relocate('okhttp3', 'net.buycraft.plugin.internal.okhttp3')
-    relocate('okio', 'net.buycraft.plugin.internal.okio')
-    relocate('retrofit2', 'net.buycraft.plugin.internal.retrofit2')
-    relocate('com.fasterxml.jackson', 'net.buycraft.plugin.internal.jackson')
-
-    relocate('org.jetbrains', 'net.buycraft.plugin.internal.org.jetbrains')
-    relocate('com.google.code.gson', 'net.buycraft.plugin.internal.google')
-
-    minimize {
-        exclude("com/google/**")
-        exclude("javax/annotation/**")
-        exclude("org/**")
-
-        exclude("META-INF/proguard/*")
-        exclude("META-INF/retrofit.*")
-    }
-
-    classifier ''
-}
-
-afterEvaluate {
-    reobf {
-        shadowJar {
-            mappings = project.tasks.getByName('createMcpToSrg').output
-        } // Reobfuscate the shadowed JAR
-    }
+    shadow 'net.tebex:tebex-common:12.0.9'
+    shadow 'net.tebex:tebex-plugin-shared:12.0.9'
 }
 
 jar {
+    archiveClassifier = 'slim'
     manifest {
         attributes([
-                "Specification-Title"     : "BuycraftX",
-                "Specification-Vendor"    : "Tebex",
-                "Specification-Version"   : "1", // We are version 1 of ourselves
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : "${version}",
-                "Implementation-Vendor"   : "Tebex",
+                "Specification-Title": mod_id,
+                "Specification-Vendor": mod_authors,
+                "Specification-Version": "1", // We are version 1 of ourselves
+                "Implementation-Title": project.name,
+                "Implementation-Version": project.version,
+                "Implementation-Vendor": mod_authors,
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
 
-assemble.dependsOn shadowJar
+shadowJar {
+    archiveClassifier = ''
 
-reobf {
-    shadowJar {}
+    configurations = [project.configurations.shadow]
+
+    include 'net.tebex:tebex-common:12.0.9'
+    include 'net.tebex:tebex-plugin-shared:12.0.9'
+
+    relocate 'okhttp3', 'net.buycraft.plugin.internal.okhttp3'
+
+    relocate 'okio', 'net.buycraft.plugin.internal.okio'
+
+    relocate 'retrofit2', 'net.buycraft.plugin.internal.retrofit2'
+
+    relocate 'com.fasterxml.jackson', 'net.buycraft.plugin.internal.jackson'
+
+    relocate 'com.google.gson', 'net.buycraft.plugin.internal.com.google.gson'
+    relocate 'com.google.common', 'net.buycraft.plugin.internal.com.google.common'
+    relocate 'com.google.errorprone.annotations', 'net.buycraft.plugin.internal.com.google.errorprone.annotations'
+    relocate 'com.google.j2objc.annotations', 'net.buycraft.plugin.internal.com.google.j2objc.annotations'
+    relocate 'com.google.thirdparty.publicsuffix', 'net.buycraft.plugin.internal.com.google.thirdparty.publicsuffix'
+
+    relocate 'javax.annotation', 'net.buycraft.plugin.internal.javax.annotation'
+//    relocate 'javax.annotation.concurrent', 'net.buycraft.plugin.internal.javax.annotation.concurrent'
+    relocate 'javax.annotation.meta', 'net.buycraft.plugin.internal.javax.annotation.meta'
+
+    relocate 'org.checkerframework', 'net.buycraft.plugin.internal.org.checkerframework'
+    relocate 'org.intellij.lang.annotations', 'net.buycraft.plugin.internal.org.intellij.lang.annotations'
+    relocate 'org.jetbrains.annotations', 'net.buycraft.plugin.internal.org.jetbrains.annotations'
+
+    finalizedBy 'reobfShadowJar'
 }
+
+afterEvaluate {
+    reobf {
+        shadowJar {}
+    }
+}
+
+assemble.dependsOn shadowJar

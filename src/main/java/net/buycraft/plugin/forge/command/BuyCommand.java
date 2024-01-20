@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.buycraft.plugin.forge.BuycraftPlugin;
+import net.buycraft.plugin.forge.util.CmdUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.ClickEvent;
@@ -21,7 +22,7 @@ public class BuyCommand implements Command<CommandSourceStack> {
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         if(plugin.getServerInformation() == null) {
             ForgeMessageUtil.sendMessage(context.getSource(), new TextComponent(ForgeMessageUtil.format("information_no_server"))
-                    .setStyle(BuycraftPlugin.ERROR_STYLE));
+                    .setStyle(CmdUtil.ERROR_STYLE));
             return 1;
         }
 

@@ -1,10 +1,10 @@
 package net.buycraft.plugin.forge.util;
 
 
+import net.buycraft.plugin.data.responses.Version;
 import net.buycraft.plugin.forge.BuycraftPlugin;
 import net.buycraft.plugin.forge.command.ForgeMessageUtil;
-import net.buycraft.plugin.forge.common.data.responses.Version;
-import net.buycraft.plugin.forge.shared.util.VersionUtil;
+import net.buycraft.plugin.shared.util.VersionUtil;
 import net.minecraft.Util;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -13,7 +13,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import static net.buycraft.plugin.forge.shared.util.VersionUtil.isVersionGreater;
+import static net.buycraft.plugin.shared.util.VersionUtil.isVersionGreater;
 
 public class VersionCheck {
     private final BuycraftPlugin plugin;
@@ -53,7 +53,7 @@ public class VersionCheck {
         if (event.getPlayer().hasPermissions(2) && !upToDate) {
             plugin.getPlatform().executeAsyncLater(() ->
                             event.getPlayer().sendMessage(new TextComponent(ForgeMessageUtil.format("update_available", lastKnownVersion.getVersion()))
-                                    .setStyle(BuycraftPlugin.INFO_STYLE), Util.NIL_UUID),
+                                    .setStyle(CmdUtil.INFO_STYLE), Util.NIL_UUID),
                     3, TimeUnit.SECONDS);
         }
     }
